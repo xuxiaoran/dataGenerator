@@ -61,38 +61,41 @@ def createBaskets(bask_sz, start_date, days):
 	bask_id = 0
 	with open('Baskets.csv', 'wb') as csvfile:
 		writer = csv.writer(csvfile, dialect='excel')
-		line = ["\t" + str(basket_base+bask_id)]
-		time_code = rand_time_code(start_date, days)
-		sz = random.choice(basket_size)
-		bask_sens = random.choice(sensitivity)
-		s_mission = random.choice(shop_mission)
-		d_mission = random.choice(dominant_mission)
-		
-		line.append(time_code)
-		line.append(sz)
-		line.append(bask_sens)
-		line.append(s_mission)
-		line.append(d_mission)
-		writer.writerow(line)
-		csvfile.flush()
-		num_bask = int(bask_sz/os.path.getsize('Baskets.csv'))
+		count = 1
+		chunk = 1
+		num_baskets = 0
 
-		bask_id += 1
-		count = num_bask
-		chunk = chunk_size
-		while chunk > 0:
-			if count - chunk < 0:
-				chunk = count
+		while count > 0:
+			lines = []
 
-			lines = [["\t" + str(basket_base+bask_id+i) for i in range(chunk)],
-						[rand_time_code(start_date, days) for i in range(chunk)],
-						numpy.random.choice(basket_size, size=chunk),
-						numpy.random.choice(sensitivity, size=chunk),
-						numpy.random.choice(shop_mission, size=chunk),
-						numpy.random.choice(dominant_mission, size=chunk)]
-			csvfile.writelines(['%s,%s,%s,%s,%s,%s\n' % row for row in zip(*lines)])
-			bask_id += chunk
+			for  i in range(chunk):
+				line = ["\t" + str(basket_base+bask_id)]
+				time_code = rand_time_code(start_date, days)
+				sz = random.choice(basket_size)
+				bask_sens = random.choice(sensitivity)
+				s_mission = random.choice(shop_mission)
+				d_mission = random.choice(dominant_mission)
+				line.append(time_code)
+				line.append(sz)
+				line.append(bask_sens)
+				line.append(s_mission)
+				line.append(d_mission)
+				lines.append(line)
+				bask_id += 1
+
 			count -= chunk
+
+			if chunk == 1:
+				writer.writerow(line)
+				csvfile.flush()
+				num_baskets = int(bask_sz/os.path.getsize('Baskets.csv'))
+				count = num_baskets
+				chunk = chunk_size
+			else:
+				writer.writerows(lines)
+
+			if count < chunk:
+				chunk = count
 
 	return bask_id
 
@@ -103,34 +106,33 @@ def createProducts(prod_sz):
 		writer = csv.writer(csvfile, dialect='excel')
 		desc = "description"
 		prefixes = ['PRD', 'CL', 'DEP', 'G', 'D']
-
-		line = [str(prod_id)]
-		for prefix in prefixes:
-			line.append(format_code(prefix, prod_id, 5))
-			line.append(desc)
-		writer.writerow(line)
-		csvfile.flush()
-		num_products = int(prod_sz/os.path.getsize('Products.csv'))
-
-		prod_id += 1
-		count = num_products
-		chunk = chunk_size
+		count = 1
+		chunk = 1
+		num_products = 0
 
 		while count > 0:
-			if count - chunk < 0:
+			lines = []
+			for i in range(chunk):
+				line = [str(prod_id)]
+				for prefix in prefixes:
+					line.append(format_code(prefix, prod_id, 5))
+					line.append(desc)
+				lines.append(line)
+				prod_id += 1
+
+			count -= chunk
+
+			if chunk == 1:
+				writer.writerow(line)
+				csvfile.flush()
+				num_products = int(prod_sz/os.path.getsize('Products.csv'))
+				count = num_products
+				chunk = chunk_size
+			else:
+				writer.writerows(lines)
+
+			if count < chunk:
 				chunk = count
-			lines = [[prod_id+i for i in range(chunk)], [format_code('PRD', prod_id+i, 5) for i in range(chunk)],
-					[desc]*chunk, [format_code('CL', random.randint(0,999), 5) for i in range(chunk)], [desc]*chunk,
-					[format_code('DEP', random.randint(0,999), 5) for i in range(chunk)], [desc]*chunk,
-					[format_code('G', random.randint(0,99), 5) for i in range(chunk)], [desc]*chunk,
-					[format_code('D', random.randint(0,9), 5) for i in range(chunk)], [desc]*chunk]
-			prod_id += chunk
-			count = count - chunk
-
-			for r in zip(*lines):
-				print r
-
-			csvfile.writelines(['%i,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row for row in zip(*lines)])
 
 	return prod_id
 
@@ -179,36 +181,34 @@ def createCustomers(cust_sz, num_store):
 	cust_id = 0
 	with open('Customers.csv', 'wb') as csvfile:
 		writer = csv.writer(csvfile, dialect='excel')
-		line = ["\t" + str(customer_base+cust_id)]
-		cust_code = format_code('CUST', cust_id, 10)
-		pref_store = "\t" + str(store_base + random.randint(0, num_store-1))
-		price_sens = random.choice(sensitivity)
-		stage = random.choice(lifestage)
-
-		line.append(cust_code)
-		line.append(pref_store)
-		line.append(price_sens)
-		line.append(stage)
-		writer.writerow(line)
-		csvfile.flush()
-		num_cust = int(cust_sz/os.path.getsize('Customers.csv'))
-
-		cust_id += 1
-		count = num_cust
-		chunk = chunk_size
+		count = 1
+		chunk = 1
+		num_cust = 0
 
 		while count > 0:
-			if count - chunk < 0:
-				chunk = count
+			lines = []
+			for i in range(chunk):
+				line = ["\t" + str(customer_base+cust_id)]
+				line.append(format_code('CUST', cust_id, 10))
+				line.append("\t" + str(numpy.random.randint(num_store) +store_base))
+				line.append(random.choice(sensitivity))
+				line.append(random.choice(lifestage))
+				lines.append(line)
+				cust_id += 1
 
-			lines = [ ["\t" + str(customer_base+cust_id+i) for i in range(chunk)], 
-						[format_code('CUST', cust_id+i, 10) for i in range(chunk)],
-						["\t" + str(numpy.random.randint(num_store) +store_base) for i in range(chunk)],
-						numpy.random.choice(sensitivity, size=chunk),
-						numpy.random.choice(lifestage, size=chunk)]
-			csvfile.writelines(['%s,%s,%s,%s,%s\n' % row for row in zip(*lines)])
-			cust_id += chunk
 			count -= chunk
+
+			if chunk == 1:
+				writer.writerow(line)
+				csvfile.flush()
+				num_cust = int(cust_sz/os.path.getsize('Customers.csv'))
+				count = num_cust
+				chunk = chunk_size
+			else:
+				writer.writerows(lines)
+
+			if count < chunk:
+				chunk = count
 
 	return cust_id
 
