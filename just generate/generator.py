@@ -24,7 +24,6 @@ store_base = 992100100000000
 customer_base = 993100100000000
 basket_base = 994100100000000
 
-
 def format_code(prefix, num, digits):
 	return prefix + str(num).rjust(digits, '0')
 
